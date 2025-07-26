@@ -166,10 +166,33 @@
             };
 
             const handlePlanSelect = (plan) => {
-                setSelectedPlan(plan);
-                // In real app, this would redirect to payment processing
-                alert(`Selected ${plan} plan! Redirecting to payment...`);
-            };
+    setSelectedPlan(plan);
+    
+    // Yoco payment integration for South African practices
+    const planPrices = {
+        'basic': 29000, // R290.00 in cents
+        'pro': 79000,   // R790.00 in cents  
+        'premium': 149000 // R1490.00 in cents
+    };
+    
+    const yoco = new window.YocoSDK({
+        publicKey: 'pk_test_6fc83069enAZnP663394' // ← CHANGE THIS!
+    });
+    
+    yoco.showPopup({
+        amountInCents: planPrices[plan],
+        currency: 'ZAR',
+        name: `MedBook Pro - ${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`,
+        description: `Monthly subscription for ${plan} plan`,
+        callback: function (result) {
+            if (result.error) {
+                alert("Payment failed: " + result.error.message);
+            } else {
+                alert(`🎉 Payment successful! Welcome to MedBook Pro ${plan}!\n\nTransaction ID: ${result.id}`);
+            }
+        }
+    });
+};
 
             return (
                 <div className="container">
