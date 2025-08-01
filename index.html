@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
 <script src="https://js.yoco.com/sdk/v1/yoco-sdk-web.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>    
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GSJD Patient Bookings - Doctor Appointment Booking</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
@@ -62,14 +61,6 @@
         const { useState, useEffect } = React;
 
         function BookingSystem() {
-function BookingSystem() {
-    // ADD THIS DATABASE CONNECTION CODE HERE!
-    const supabaseUrl = 'https://kzfizecrtiexhenyeirf.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6Zml6ZWNydGlleGhlbnllaXJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1Mzc3NDcsImV4cCI6MjA2OTExMzc0N30.0Hol3X9H-ht47xhfCRuWmUaKnu6-5YI_Std4Z99Jm1M';
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-    
-    // Then your existing code continues...
-    const [selectedDate, setSelectedDate] = useState(null);
             const [selectedDate, setSelectedDate] = useState(null);
             const [selectedTime, setSelectedTime] = useState(null);
             const [selectedPlan, setSelectedPlan] = useState('basic');
