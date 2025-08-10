@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <script src="https://js.yoco.com/sdk/v1/yoco-sdk-web.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GSJD Patient Bookings - Doctor Appointment Booking</title>
@@ -50,7 +51,10 @@
         .modal-content { background: white; padding: 40px; border-radius: 20px; max-width: 500px; width: 90%; }
         .success-animation { text-align: center; }
         .success-animation .checkmark { font-size: 4rem; color: #4caf50; animation: bounce 0.6s; }
+        .loading { opacity: 0.7; pointer-events: none; }
+        .btn.loading::after { content: " 🔄"; animation: spin 1s linear infinite; }
         @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-30px); } 60% { transform: translateY(-15px); } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @media (max-width: 768px) { .main-content { grid-template-columns: 1fr; } .header h1 { font-size: 2rem; } }
     </style>
 </head>
@@ -60,12 +64,18 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
+        // 🎯 SUPABASE SETUP - Connected to YOUR real database!
+        const supabaseUrl = 'https://kzfizecrtiexhenyeirf.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6Zml6ZWNydGlleGhlbnllaXJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1Mzc3NDcsImV4cCI6MjA2OTExMzc0N30.0Hol3X9H-ht47xhfCRuWmUaKnu6-5YI_Std4Z99Jm1M';
+        const supabase = window.supabase?.createClient ? window.supabase.createClient(supabaseUrl, supabaseKey) : null;
+
         function BookingSystem() {
             const [selectedDate, setSelectedDate] = useState(null);
             const [selectedTime, setSelectedTime] = useState(null);
             const [selectedPlan, setSelectedPlan] = useState('basic');
             const [showModal, setShowModal] = useState(false);
             const [currentView, setCurrentView] = useState('booking');
+            const [isLoading, setIsLoading] = useState(false);
             const [bookingData, setBookingData] = useState({
                 patientName: '',
                 email: '',
@@ -157,48 +167,98 @@
                 return days;
             };
 
-            const handleBooking = () => {
+            // 🎯 NEW DATABASE-SAVING BOOKING FUNCTION!
+            const handleBooking = async () => {
                 if (!selectedDate || !selectedTime || !bookingData.patientName || !bookingData.email) {
                     alert('Please fill in all required fields and select a date/time');
                     return;
                 }
-                setShowModal(true);
+
+                setIsLoading(true);
+
+                try {
+                    // Check if Supabase is configured
+                    if (!supabase) {
+                        console.log('❌ Database not connected');
+                        alert('Database connection failed');
+                        setIsLoading(false);
+                        return;
+                    }
+
+                    // 🏥 First, create or find the practice (doctor's office)
+                    let practiceId = 'demo-practice-123'; // For now, we'll use a demo practice
+                    
+                    console.log('💾 Saving appointment to YOUR real database...');
+
+                    // Save appointment to YOUR professional database!
+                    const { data, error } = await supabase
+                        .from('appointments')
+                        .insert([{
+                            appointment_date: `2024-12-${selectedDate.toString().padStart(2, '0')}`,
+                            appointment_time: selectedTime,
+                            reason_for_visit: bookingData.reason || 'General consultation',
+                            patient_name: bookingData.patientName,
+                            patient_email: bookingData.email,
+                            patient_phone: bookingData.phone || null,
+                            practice_id: practiceId
+                        }]);
+
+                    if (error) {
+                        console.error('❌ Database Error Details:', error);
+                        throw error;
+                    }
+                    
+                    setShowModal(true);
+                    console.log('✅ SUCCESS! Appointment saved to YOUR database!', data);
+                    console.log('🎯 Check your Supabase dashboard to see the saved appointment!');
+                    
+                } catch (error) {
+                    console.error('❌ Full Error Details:', error);
+                    alert('❌ Booking failed: ' + (error.message || 'Unknown error'));
+                } finally {
+                    setIsLoading(false);
+                }
             };
 
             const handlePlanSelect = (plan) => {
-    setSelectedPlan(plan);
-    
-    // Yoco payment integration for South African practices
-    const planPrices = {
-        'basic': 29000, // R290.00 in cents
-        'pro': 79000,   // R790.00 in cents  
-        'premium': 149000 // R1490.00 in cents
-    };
-    
-    const yoco = new window.YocoSDK({
-        publicKey: 'pk_test_6fc83069enAZnP663394' // ← CHANGE THIS!
-    });
-    
-    yoco.showPopup({
-        amountInCents: planPrices[plan],
-        currency: 'ZAR',
-        name: `MedBook Pro - ${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`,
-        description: `Monthly subscription for ${plan} plan`,
-        callback: function (result) {
-            if (result.error) {
-                alert("Payment failed: " + result.error.message);
-            } else {
-                alert(`🎉 Payment successful! Welcome to MedBook Pro ${plan}!\n\nTransaction ID: ${result.id}`);
-            }
-        }
-    });
-};
+                setSelectedPlan(plan);
+                
+                // Yoco payment integration for South African practices
+                const planPrices = {
+                    'basic': 29000, // R290.00 in cents
+                    'pro': 79000,   // R790.00 in cents  
+                    'premium': 149000 // R1490.00 in cents
+                };
+                
+                const yoco = new window.YocoSDK({
+                    publicKey: 'pk_test_6fc83069enAZnP663394' // ← CHANGE THIS!
+                });
+                
+                yoco.showPopup({
+                    amountInCents: planPrices[plan],
+                    currency: 'ZAR',
+                    name: `MedBook Pro - ${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`,
+                    description: `Monthly subscription for ${plan} plan`,
+                    callback: function (result) {
+                        if (result.error) {
+                            alert("Payment failed: " + result.error.message);
+                        } else {
+                            alert(`🎉 Payment successful! Welcome to MedBook Pro ${plan}!\n\nTransaction ID: ${result.id}`);
+                        }
+                    }
+                });
+            };
 
             return (
                 <div className="container">
                     <div className="header">
                         <h1>GSJD Patient Bookings</h1>
                         <p>Your Gateway to Seamless Healthcare!</p>
+                        
+                        {/* Database Status Indicator */}
+                        <div style={{marginTop: '15px', padding: '10px', background: supabase ? '#d4edda' : '#fff3cd', borderRadius: '8px', fontSize: '0.9rem'}}>
+                            {supabase ? '✅ Database Connected!' : '⚠️ Demo Mode - Configure Supabase to save real data'}
+                        </div>
                         
                         <div style={{marginTop: '20px'}}>
                             <button 
@@ -229,6 +289,7 @@
                                         placeholder="Enter patient name"
                                         value={bookingData.patientName}
                                         onChange={(e) => setBookingData({...bookingData, patientName: e.target.value})}
+                                        disabled={isLoading}
                                     />
                                 </div>
 
@@ -239,6 +300,7 @@
                                         placeholder="patient@email.com"
                                         value={bookingData.email}
                                         onChange={(e) => setBookingData({...bookingData, email: e.target.value})}
+                                        disabled={isLoading}
                                     />
                                 </div>
 
@@ -249,6 +311,7 @@
                                         placeholder="+27 xx xxx xxxx"
                                         value={bookingData.phone}
                                         onChange={(e) => setBookingData({...bookingData, phone: e.target.value})}
+                                        disabled={isLoading}
                                     />
                                 </div>
 
@@ -257,6 +320,7 @@
                                     <select 
                                         value={bookingData.reason}
                                         onChange={(e) => setBookingData({...bookingData, reason: e.target.value})}
+                                        disabled={isLoading}
                                     >
                                         <option value="">Select reason</option>
                                         <option value="checkup">Regular Checkup</option>
@@ -267,11 +331,12 @@
                                 </div>
 
                                 <button 
-                                    className="btn btn-success" 
+                                    className={`btn btn-success ${isLoading ? 'loading' : ''}`}
                                     onClick={handleBooking}
                                     style={{width: '100%', marginTop: '20px'}}
+                                    disabled={isLoading}
                                 >
-                                    🎯 Book Appointment
+                                    {isLoading ? '💾 Saving...' : '🎯 Book Appointment'}
                                 </button>
                             </div>
 
@@ -290,7 +355,7 @@
                                                 selectedDate === dayData?.day ? 'selected' : ''
                                             }`}
                                             onClick={() => {
-                                                if (dayData && !dayData.isBooked && !dayData.isPast) {
+                                                if (dayData && !dayData.isBooked && !dayData.isPast && !isLoading) {
                                                     setSelectedDate(dayData.day);
                                                 }
                                             }}
@@ -308,7 +373,7 @@
                                                 <div 
                                                     key={time}
                                                     className={`time-slot ${selectedTime === time ? 'selected' : ''}`}
-                                                    onClick={() => setSelectedTime(time)}
+                                                    onClick={() => !isLoading && setSelectedTime(time)}
                                                 >
                                                     {time}
                                                 </div>
@@ -364,9 +429,16 @@
                                 <p>Your appointment is confirmed for:</p>
                                 <p><strong>{selectedDate}th at {selectedTime}</strong></p>
                                 <p>Confirmation sent to: {bookingData.email}</p>
+                                {supabase && <p style={{color: '#4caf50', fontSize: '0.9rem', marginTop: '10px'}}>💾 Saved to database successfully!</p>}
                                 <button 
                                     className="btn btn-primary"
-                                    onClick={() => setShowModal(false)}
+                                    onClick={() => {
+                                        setShowModal(false);
+                                        // Reset form
+                                        setBookingData({patientName: '', email: '', phone: '', reason: ''});
+                                        setSelectedDate(null);
+                                        setSelectedTime(null);
+                                    }}
                                     style={{marginTop: '20px'}}
                                 >
                                     Close
@@ -381,9 +453,10 @@
                 </div>
             );
         }
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<BookingSystem />);
-        
+
+        // 🎈 Updated to React 18 way (no more warnings!)
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<BookingSystem />);
     </script>
 <footer style="text-align: center; color: white; padding: 40px;">
     <h3>Ready to Get Started?</h3>
@@ -392,4 +465,3 @@ root.render(<BookingSystem />);
 </footer>
 </body>
 </html>
-
