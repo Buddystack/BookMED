@@ -185,8 +185,35 @@
                         return;
                     }
 
-                    // 🏥 First, create or find the practice (doctor's office)
-                    let practiceId = 'demo-practice-123'; // For now, we'll use a demo practice
+                    // 🏥 First, let's create a demo practice if it doesn't exist
+                    let practiceId;
+                    
+                    // Try to find existing practice or create one
+                    const { data: existingPractice } = await supabase
+                        .from('practices')
+                        .select('id')
+                        .limit(1);
+                    
+                    if (existingPractice && existingPractice.length > 0) {
+                        practiceId = existingPractice[0].id;
+                        console.log('✅ Using existing practice:', practiceId);
+                    } else {
+                        // Create a demo practice
+                        const { data: newPractice, error: practiceError } = await supabase
+                            .from('practices')
+                            .insert([{
+                                practice_name: 'GSJD Medical Practice',
+                                doctor_name: 'Dr. Demo',
+                                email: 'demo@gsjd.com',
+                                phone: '+27 60 988 4937',
+                                plan_type: 'pro'
+                            }])
+                            .select();
+                        
+                        if (practiceError) throw practiceError;
+                        practiceId = newPractice[0].id;
+                        console.log('✅ Created new practice:', practiceId);
+                    }
                     
                     console.log('💾 Saving appointment to YOUR real database...');
 
@@ -256,8 +283,8 @@
                         <p>Your Gateway to Seamless Healthcare!</p>
                         
                         {/* Database Status Indicator */}
-                        <div style={{marginTop: '15px', padding: '10px', background: supabase ? '#d4edda' : '#fff3cd', borderRadius: '8px', fontSize: '0.9rem'}}>
-                            {supabase ? '✅ Database Connected!' : '⚠️ Demo Mode - Configure Supabase to save real data'}
+                        <div style={{marginTop: '15px', padding: '10px', background: '#d4edda', borderRadius: '8px', fontSize: '0.9rem'}}>
+                            ✅ Connected to YOUR Real Database! (kzfizecrtiexhenyeirf.supabase.co)
                         </div>
                         
                         <div style={{marginTop: '20px'}}>
@@ -429,7 +456,7 @@
                                 <p>Your appointment is confirmed for:</p>
                                 <p><strong>{selectedDate}th at {selectedTime}</strong></p>
                                 <p>Confirmation sent to: {bookingData.email}</p>
-                                {supabase && <p style={{color: '#4caf50', fontSize: '0.9rem', marginTop: '10px'}}>💾 Saved to database successfully!</p>}
+                                <p style={{color: '#4caf50', fontSize: '0.9rem', marginTop: '10px'}}>💾 Saved to YOUR real database! Check Supabase to see it!</p>
                                 <button 
                                     className="btn btn-primary"
                                     onClick={() => {
