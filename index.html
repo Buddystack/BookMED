@@ -381,8 +381,9 @@
                 </div>
             );
         }
-
-        ReactDOM.render(<BookingSystem />, document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<BookingSystem />);
+        
     </script>
 <footer style="text-align: center; color: white; padding: 40px;">
     <h3>Ready to Get Started?</h3>
@@ -391,3 +392,4 @@
 </footer>
 </body>
 </html>
+
